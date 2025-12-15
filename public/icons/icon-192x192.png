@@ -1,0 +1,8 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="#0891b2"/>
+  
+  <!-- Activity Icon (Heart Rate) -->
+  <path d="M96 144L64 112L80 96L96 112L128 80L144 96L96 144Z" fill="white" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48 96L64 80L80 96L96 64L112 96L128 80L144 96" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
