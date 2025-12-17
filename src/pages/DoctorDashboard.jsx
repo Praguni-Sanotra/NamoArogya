@@ -3,18 +3,21 @@
  * Main dashboard with statistics and recent patients
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Users, FileText, Activity, TrendingUp } from 'lucide-react';
+import { Users, FileText, Activity, TrendingUp, BookOpen } from 'lucide-react';
 import { fetchPatients } from '../store/slices/patientSlice';
 import Card from '../components/Card';
 import Table from '../components/Table';
+import AyushCodeBrowser from '../components/AyushCodeBrowser';
+import AyushRecommendations from '../components/AyushRecommendations';
 import { formatDate } from '../utils/helpers';
 
 const DoctorDashboard = () => {
     const dispatch = useDispatch();
     const { patients, loading } = useSelector((state) => state.patients);
     const { user } = useSelector((state) => state.auth);
+    const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
         // Fetch recent patients
@@ -134,48 +137,88 @@ const DoctorDashboard = () => {
                 })}
             </div>
 
-            {/* Recent Patients */}
-            <Card title="Recent Patients" subtitle="Latest patient records">
-                <Table
-                    columns={columns}
-                    data={displayData}
-                    loading={loading}
-                    emptyMessage="No patients found"
-                />
-            </Card>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card title="Quick Actions" hover>
-                    <div className="space-y-3">
-                        <button className="w-full text-left px-4 py-3 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
-                            <p className="font-medium text-primary-700">Add New Patient</p>
-                            <p className="text-sm text-primary-600">Register a new patient record</p>
-                        </button>
-                        <button className="w-full text-left px-4 py-3 bg-secondary-50 hover:bg-secondary-100 rounded-lg transition-colors">
-                            <p className="font-medium text-secondary-700">Create Dual Coding</p>
-                            <p className="text-sm text-secondary-600">Map NAMASTE to ICD-11</p>
-                        </button>
-                    </div>
-                </Card>
-
-                <Card title="System Status" hover>
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-neutral-700">API Connection</span>
-                            <span className="badge badge-secondary">Online</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-neutral-700">Database</span>
-                            <span className="badge badge-secondary">Connected</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-neutral-700">Last Sync</span>
-                            <span className="text-sm text-neutral-600">2 minutes ago</span>
-                        </div>
-                    </div>
-                </Card>
+            {/* Tab Navigation */}
+            <div className="flex gap-2 border-b border-neutral-200">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'overview'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                >
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab('ayush-browser')}
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'ayush-browser'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                >
+                    AYUSH Code Browser
+                </button>
+                <button
+                    onClick={() => setActiveTab('recommendations')}
+                    className={`px-4 py-2 font-medium transition-colors ${activeTab === 'recommendations'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                >
+                    AI Recommendations
+                </button>
             </div>
+
+            {/* Conditional Content */}
+            {activeTab === 'overview' && (
+                <>
+                    {/* Recent Patients */}
+                    <Card title="Recent Patients" subtitle="Latest patient records">
+                        <Table
+                            columns={columns}
+                            data={displayData}
+                            loading={loading}
+                            emptyMessage="No patients found"
+                        />
+                    </Card>
+
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card title="Quick Actions" hover>
+                            <div className="space-y-3">
+                                <button className="w-full text-left px-4 py-3 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                                    <p className="font-medium text-primary-700">Add New Patient</p>
+                                    <p className="text-sm text-primary-600">Register a new patient record</p>
+                                </button>
+                                <button className="w-full text-left px-4 py-3 bg-secondary-50 hover:bg-secondary-100 rounded-lg transition-colors">
+                                    <p className="font-medium text-secondary-700">Create Dual Coding</p>
+                                    <p className="text-sm text-secondary-600">Map NAMASTE to ICD-11</p>
+                                </button>
+                            </div>
+                        </Card>
+
+                        <Card title="System Status" hover>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-neutral-700">API Connection</span>
+                                    <span className="badge badge-secondary">Online</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-neutral-700">Database</span>
+                                    <span className="badge badge-secondary">Connected</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-neutral-700">Last Sync</span>
+                                    <span className="text-sm text-neutral-600">2 minutes ago</span>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                </>
+            )}
+
+            {activeTab === 'ayush-browser' && <AyushCodeBrowser />}
+
+            {activeTab === 'recommendations' && <AyushRecommendations />}
         </div>
     );
 };

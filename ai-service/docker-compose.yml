@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  ai-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: namoarogya-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LOG_LEVEL=INFO
+      - REDIS_ENABLED=false
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - namoarogya-network
+
+  # Optional Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: namoarogya-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - namoarogya-network
+    profiles:
+      - with-cache
+
+networks:
+  namoarogya-network:
+    driver: bridge
+
+volumes:
+  redis-data:

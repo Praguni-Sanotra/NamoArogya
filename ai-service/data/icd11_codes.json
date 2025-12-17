@@ -1,0 +1,92 @@
+[
+    {
+        "code": "DA63",
+        "name": "Gastroesophageal reflux disease",
+        "description": "GERD with or without esophagitis, acid reflux",
+        "chapter": "Digestive system"
+    },
+    {
+        "code": "1C60",
+        "name": "Fever of unknown origin",
+        "description": "Pyrexia, elevated temperature without identified cause",
+        "chapter": "General symptoms"
+    },
+    {
+        "code": "CA80",
+        "name": "Cough",
+        "description": "Acute or chronic cough",
+        "chapter": "Respiratory system"
+    },
+    {
+        "code": "CA23",
+        "name": "Asthma",
+        "description": "Bronchial asthma, dyspnea, breathlessness",
+        "chapter": "Respiratory system"
+    },
+    {
+        "code": "DD70",
+        "name": "Diarrhea",
+        "description": "Acute or chronic diarrhea, loose stools",
+        "chapter": "Digestive system"
+    },
+    {
+        "code": "DB31",
+        "name": "Hemorrhoids",
+        "description": "Internal or external hemorrhoids, piles",
+        "chapter": "Digestive system"
+    },
+    {
+        "code": "3A00",
+        "name": "Iron deficiency anemia",
+        "description": "Anemia due to iron deficiency, pallor",
+        "chapter": "Blood disorders"
+    },
+    {
+        "code": "5A10",
+        "name": "Type 2 diabetes mellitus",
+        "description": "Non-insulin dependent diabetes, hyperglycemia",
+        "chapter": "Endocrine system"
+    },
+    {
+        "code": "MG29",
+        "name": "Edema",
+        "description": "Localized or generalized edema, swelling",
+        "chapter": "General symptoms"
+    },
+    {
+        "code": "FA20",
+        "name": "Osteoarthritis",
+        "description": "Joint pain, degenerative joint disease",
+        "chapter": "Musculoskeletal system"
+    },
+    {
+        "code": "DA60",
+        "name": "Gastritis",
+        "description": "Inflammation of stomach lining, indigestion",
+        "chapter": "Digestive system"
+    },
+    {
+        "code": "CA00",
+        "name": "Acute bronchitis",
+        "description": "Inflammation of bronchi, productive cough",
+        "chapter": "Respiratory system"
+    },
+    {
+        "code": "5A11",
+        "name": "Type 1 diabetes mellitus",
+        "description": "Insulin dependent diabetes",
+        "chapter": "Endocrine system"
+    },
+    {
+        "code": "3A01",
+        "name": "Vitamin B12 deficiency anemia",
+        "description": "Pernicious anemia",
+        "chapter": "Blood disorders"
+    },
+    {
+        "code": "CA24",
+        "name": "Chronic obstructive pulmonary disease",
+        "description": "COPD, chronic bronchitis, emphysema",
+        "chapter": "Respiratory system"
+    }
+]

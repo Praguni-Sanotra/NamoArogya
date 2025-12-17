@@ -52,3 +52,9 @@ build/
 
 # Test
 test-results/
+
+# Environment files
+.env
+.env.*
+*.env
+
