@@ -15,15 +15,21 @@ const RoleBasedDashboard = () => {
     const { user } = useSelector((state) => state.auth);
 
     // Debug logging
-    console.log('Current user:', user);
+    console.log('=== ROLE DEBUG ===');
+    console.log('Full user object:', JSON.stringify(user, null, 2));
     console.log('User role:', user?.role);
-    console.log('Is admin?', user?.role === 'admin');
+    console.log('Role type:', typeof user?.role);
+    console.log('Is admin (strict)?', user?.role === 'admin');
+    console.log('Is admin (loose)?', user?.role == 'admin');
+    console.log('==================');
 
     // Render dashboard based on user role
     if (user?.role === 'admin') {
+        console.log('✅ Rendering AdminDashboard');
         return <AdminDashboard />;
     }
 
+    console.log('⚠️ Rendering DoctorDashboard (default)');
     return <DoctorDashboard />;
 };
 

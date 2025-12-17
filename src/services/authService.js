@@ -18,18 +18,22 @@ export const login = async (credentials) => {
     try {
         const response = await api.post(API_ENDPOINTS.LOGIN, credentials);
 
+        // Backend returns {success, message, data: {user, token, refreshToken}}
+        // Extract the actual data
+        const { user, token, refreshToken } = response.data || response;
+
         // Store token and user data
-        if (response.token) {
-            localStorage.setItem(STORAGE_KEYS.TOKEN, response.token);
+        if (token) {
+            localStorage.setItem(STORAGE_KEYS.TOKEN, token);
         }
-        if (response.refreshToken) {
-            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
+        if (refreshToken) {
+            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         }
-        if (response.user) {
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.user));
+        if (user) {
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         }
 
-        return response;
+        return { user, token, refreshToken };
     } catch (error) {
         console.error('Login error:', error);
         throw error;
