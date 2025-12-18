@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import PatientRecords from './pages/PatientRecords';
@@ -43,6 +44,10 @@ function App() {
                 <Route
                     path="/login"
                     element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+                />
+                <Route
+                    path="/signup"
+                    element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />}
                 />
             </Route>
 

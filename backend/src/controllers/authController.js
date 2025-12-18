@@ -53,6 +53,67 @@ async function loginController(req, res, next) {
 
 /**
  * @swagger
+ * /api/auth/signup:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: User signup
+ *     description: Register a new user (doctor or admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *               - role
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               name:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [doctor, admin]
+ *               specialty:
+ *                 type: string
+ *               license_number:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Signup successful
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User already exists
+ */
+async function signupController(req, res, next) {
+    try {
+        const { email, password, name, role, specialty, license_number } = req.body;
+
+        const user = await authService.createUser({
+            email,
+            password,
+            name,
+            role,
+            specialty,
+            license_number
+        });
+
+        return successResponse(res, { user }, 'Signup successful. Please login to continue.', 201);
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * @swagger
  * /api/auth/refresh:
  *   post:
  *     tags: [Authentication]
@@ -172,6 +233,7 @@ async function getMeController(req, res, next) {
 
 module.exports = {
     loginController,
+    signupController,
     refreshTokenController,
     logoutController,
     changePasswordController,

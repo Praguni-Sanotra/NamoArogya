@@ -11,6 +11,7 @@ const { validate } = require('../middleware/validator');
 const { authLimiter } = require('../middleware/rateLimiter');
 const {
     loginSchema,
+    signupSchema,
     refreshTokenSchema,
     changePasswordSchema,
 } = require('../validators/authValidator');
@@ -25,6 +26,18 @@ router.post(
     authLimiter,
     validate(loginSchema),
     authController.loginController
+);
+
+/**
+ * @route   POST /api/auth/signup
+ * @desc    User signup
+ * @access  Public
+ */
+router.post(
+    '/signup',
+    authLimiter,
+    validate(signupSchema),
+    authController.signupController
 );
 
 /**

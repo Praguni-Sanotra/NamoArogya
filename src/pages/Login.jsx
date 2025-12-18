@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, UserCircle } from 'lucide-react';
 import { loginUser, clearError } from '../store/slices/authSlice';
 import Input from '../components/Input';
@@ -129,8 +129,8 @@ const Login = () => {
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, role: 'doctor' }))}
                             className={`p-3 border-2 rounded-lg transition-all ${formData.role === 'doctor'
-                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                    : 'border-neutral-200 hover:border-neutral-300'
+                                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                : 'border-neutral-200 hover:border-neutral-300'
                                 }`}
                         >
                             <UserCircle className="w-6 h-6 mx-auto mb-1" />
@@ -140,8 +140,8 @@ const Login = () => {
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, role: 'admin' }))}
                             className={`p-3 border-2 rounded-lg transition-all ${formData.role === 'admin'
-                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                                    : 'border-neutral-200 hover:border-neutral-300'
+                                ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                : 'border-neutral-200 hover:border-neutral-300'
                                 }`}
                         >
                             <UserCircle className="w-6 h-6 mx-auto mb-1" />
@@ -161,16 +161,13 @@ const Login = () => {
                 </Button>
             </form>
 
-            {/* Demo Credentials Info */}
-            <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
-                <p className="text-xs text-neutral-500 mb-2">
-                    <strong>Demo Credentials:</strong>
-                </p>
-                <p className="text-xs text-neutral-600">
-                    Email: demo@namoarogya.com<br />
-                    Password: demo123
-                </p>
-            </div>
+            {/* Signup Link */}
+            <p className="mt-6 text-center text-sm text-neutral-600">
+                Don't have an account?{' '}
+                <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
+                    Sign up
+                </Link>
+            </p>
         </div>
     );
 };
