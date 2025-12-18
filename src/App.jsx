@@ -5,6 +5,7 @@ import Signup from './pages/Signup';
 import DoctorDashboard from './pages/DoctorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import PatientRecords from './pages/PatientRecords';
+import AddPatient from './pages/AddPatient';
 import DualCoding from './pages/DualCoding';
 import Analytics from './pages/Analytics';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -57,6 +58,7 @@ function App() {
                     <Route path="/dashboard" element={<RoleBasedDashboard />} />
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/patients" element={<PatientRecords />} />
+                    <Route path="/patients/add" element={<AddPatient />} />
                     <Route path="/dual-coding" element={<DualCoding />} />
                     <Route path="/analytics" element={<Analytics />} />
                 </Route>

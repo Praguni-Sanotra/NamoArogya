@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import { fetchPatients, setFilters } from '../store/slices/patientSlice';
 import Card from '../components/Card';
@@ -15,6 +16,7 @@ import { formatDate } from '../utils/helpers';
 
 const PatientRecords = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { patients, loading, filters } = useSelector((state) => state.patients);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,8 +34,7 @@ const PatientRecords = () => {
     };
 
     const handleAddPatient = () => {
-        // TODO: Open modal to add patient
-        alert('Add Patient modal - To be implemented with backend');
+        navigate('/patients/add');
     };
 
     const handleEditPatient = (patient) => {

@@ -1,170 +1,81 @@
 /**
  * Patient Routes
- * API endpoints for patient management
+ * Defines patient-related API endpoints
  */
 
 const express = require('express');
 const router = express.Router();
-const { authenticate, authorize } = require('../middleware/auth');
-const { auditLog } = require('../middleware/auditLog');
+const patientController = require('../controllers/patientController');
+const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validator');
+const {
+    createPatientSchema,
+    updatePatientSchema,
+} = require('../validators/patientValidator');
 
-// Placeholder controllers - to be implemented
-const patientController = {
-    getAll: async (req, res) => {
-        res.json({ success: true, message: 'Get all patients', data: [] });
-    },
-    getById: async (req, res) => {
-        res.json({ success: true, message: 'Get patient by ID', data: {} });
-    },
-    create: async (req, res) => {
-        res.json({ success: true, message: 'Patient created', data: {} });
-    },
-    update: async (req, res) => {
-        res.json({ success: true, message: 'Patient updated', data: {} });
-    },
-    delete: async (req, res) => {
-        res.json({ success: true, message: 'Patient deleted' });
-    },
-    getFHIR: async (req, res) => {
-        res.json({ resourceType: 'Patient', id: req.params.id });
-    },
-};
+// All routes require authentication
+router.use(authenticate);
 
 /**
- * @swagger
- * /api/patients:
- *   get:
- *     tags: [Patients]
- *     summary: Get all patients
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *       - in: query
- *         name: search
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of patients
+ * @route   POST /api/patients
+ * @desc    Create new patient
+ * @access  Private (Doctor/Admin)
  */
-router.get('/', authenticate, patientController.getAll);
+router.post(
+    '/',
+    validate(createPatientSchema),
+    patientController.createPatient
+);
 
 /**
- * @swagger
- * /api/patients/{id}:
- *   get:
- *     tags: [Patients]
- *     summary: Get patient by ID
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Patient details
+ * @route   GET /api/patients
+ * @desc    Get all patients with pagination
+ * @access  Private (Doctor/Admin)
  */
-router.get('/:id', authenticate, patientController.getById);
+router.get(
+    '/',
+    patientController.getPatients
+);
 
 /**
- * @swagger
- * /api/patients:
- *   post:
- *     tags: [Patients]
- *     summary: Create new patient
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Patient'
- *     responses:
- *       201:
- *         description: Patient created
+ * @route   GET /api/patients/:id
+ * @desc    Get patient by ID
+ * @access  Private (Doctor/Admin)
  */
-router.post('/', authenticate, authorize('doctor', 'admin'), patientController.create);
+router.get(
+    '/:id',
+    patientController.getPatientById
+);
 
 /**
- * @swagger
- * /api/patients/{id}:
- *   put:
- *     tags: [Patients]
- *     summary: Update patient
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Patient'
- *     responses:
- *       200:
- *         description: Patient updated
+ * @route   PUT /api/patients/:id
+ * @desc    Update patient
+ * @access  Private (Doctor/Admin)
  */
-router.put('/:id', authenticate, authorize('doctor', 'admin'), patientController.update);
+router.put(
+    '/:id',
+    validate(updatePatientSchema),
+    patientController.updatePatient
+);
 
 /**
- * @swagger
- * /api/patients/{id}:
- *   delete:
- *     tags: [Patients]
- *     summary: Delete patient
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Patient deleted
+ * @route   DELETE /api/patients/:id
+ * @desc    Delete patient (soft delete)
+ * @access  Private (Doctor/Admin)
  */
-router.delete('/:id', authenticate, authorize('admin'), patientController.delete);
+router.delete(
+    '/:id',
+    patientController.deletePatient
+);
 
 /**
- * @swagger
- * /api/patients/{id}/fhir:
- *   get:
- *     tags: [Patients]
- *     summary: Get FHIR Patient resource
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: FHIR Patient resource
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/FHIRPatient'
+ * @route   POST /api/patients/code-recommendations
+ * @desc    Get AYUSH code recommendations for symptoms
+ * @access  Private (Doctor/Admin)
  */
-router.get('/:id/fhir', authenticate, patientController.getFHIR);
+router.post(
+    '/code-recommendations',
+    patientController.getCodeRecommendations
+);
 
 module.exports = router;
