@@ -39,29 +39,35 @@ async function connectMongoDB() {
         const mongoUri = process.env.MONGODB_URI;
 
         if (!mongoUri) {
-            logger.warn('MONGODB_URI is not defined - MongoDB features will be disabled');
-            return;
+            logger.error('MONGODB_URI is not defined - MongoDB is required for authentication');
+            throw new Error('MONGODB_URI environment variable is required');
         }
 
+        logger.info('Connecting to MongoDB...');
+
         await mongoose.connect(mongoUri, {
-            serverSelectionTimeoutMS: 5000,
+            serverSelectionTimeoutMS: 30000, // Increased to 30 seconds
+            socketTimeoutMS: 45000,
         });
 
         mongoose.connection.on('connected', () => {
-            logger.info('MongoDB connection established');
+            logger.info('✅ MongoDB connection established');
         });
 
         mongoose.connection.on('error', (err) => {
-            logger.error('MongoDB connection error:', err);
+            logger.error('❌ MongoDB connection error:', err);
         });
 
         mongoose.connection.on('disconnected', () => {
-            logger.warn('MongoDB disconnected');
+            logger.warn('⚠️  MongoDB disconnected');
         });
 
+        logger.info('MongoDB connection successful');
+
     } catch (error) {
-        logger.warn('MongoDB connection failed (optional service):', error.message);
-        // MongoDB is optional, so we don't throw
+        logger.error('❌ MongoDB connection failed:', error.message);
+        logger.error('Please check your MONGODB_URI in the .env file');
+        throw error; // Make MongoDB required
     }
 }
 

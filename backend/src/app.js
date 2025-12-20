@@ -15,11 +15,13 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 // Import routes
 const authRoutes = require('./routes/auth.routes');
 const patientRoutes = require('./routes/patient.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 const diagnosisRoutes = require('./routes/diagnosis.routes');
 const namasteRoutes = require('./routes/namaste.routes');
 const icd11Routes = require('./routes/icd11.routes');
 const dualCodingRoutes = require('./routes/dualCoding.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 
@@ -69,6 +71,16 @@ app.get('/health', (req, res) => {
     });
 });
 
+// API Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: 'healthy',
+        service: 'NAMOAROGYA Backend API',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+    });
+});
+
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
@@ -80,11 +92,13 @@ const API_PREFIX = '/api';
 
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/patients`, patientRoutes);
+app.use(`${API_PREFIX}/dashboard`, dashboardRoutes);
 app.use(`${API_PREFIX}/diagnosis`, diagnosisRoutes);
 app.use(`${API_PREFIX}/namaste`, namasteRoutes);
 app.use(`${API_PREFIX}/icd11`, icd11Routes);
 app.use(`${API_PREFIX}/dual-coding`, dualCodingRoutes);
 app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
+app.use(`${API_PREFIX}/admin`, adminRoutes);
 
 // 404 handler
 app.use((req, res) => {

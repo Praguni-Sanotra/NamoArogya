@@ -124,14 +124,7 @@ const PatientRecords = () => {
         },
     ];
 
-    // Mock data if no patients from API
-    const displayData = patients.length > 0 ? patients : [
-        { id: 'P-001', name: 'John Doe', age: 45, gender: 'M', phone: '+1 234 567 8900', email: 'john@example.com', lastVisit: new Date(), status: 'active' },
-        { id: 'P-002', name: 'Jane Smith', age: 32, gender: 'F', phone: '+1 234 567 8901', email: 'jane@example.com', lastVisit: new Date(), status: 'active' },
-        { id: 'P-003', name: 'Robert Johnson', age: 58, gender: 'M', phone: '+1 234 567 8902', email: 'robert@example.com', lastVisit: new Date(), status: 'inactive' },
-        { id: 'P-004', name: 'Emily Davis', age: 28, gender: 'F', phone: '+1 234 567 8903', email: 'emily@example.com', lastVisit: new Date(), status: 'active' },
-        { id: 'P-005', name: 'Michael Brown', age: 51, gender: 'M', phone: '+1 234 567 8904', email: 'michael@example.com', lastVisit: new Date(), status: 'discharged' },
-    ];
+    const displayData = patients;
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -173,7 +166,7 @@ const PatientRecords = () => {
             <Card>
                 <Table
                     columns={columns}
-                    data={displayData}
+                    data={patients}
                     loading={loading}
                     emptyMessage="No patients found. Add your first patient to get started."
                 />

@@ -134,16 +134,23 @@ const patientSlice = createSlice({
             })
             .addCase(fetchPatients.fulfilled, (state, action) => {
                 state.loading = false;
-                state.patients = action.payload.data || action.payload;
-                state.pagination = {
-                    ...state.pagination,
-                    total: action.payload.total || 0,
-                    totalPages: action.payload.totalPages || 1,
-                };
+                // Handle response structure: { success, data: { patients, pagination } }
+                const responseData = action.payload.data || action.payload;
+                state.patients = responseData.patients || [];
+
+                if (responseData.pagination) {
+                    state.pagination = {
+                        page: responseData.pagination.page || 1,
+                        limit: responseData.pagination.limit || 10,
+                        total: responseData.pagination.total || 0,
+                        totalPages: responseData.pagination.pages || 1,
+                    };
+                }
             })
             .addCase(fetchPatients.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+                state.patients = []; // Clear patients on error
             });
 
         // Fetch patient by ID
