@@ -25,6 +25,7 @@ class MappingService:
         self.icd11_codes = []
         self.namaste_codes = []
         self.icd11_embeddings = None
+        self.namaste_embeddings = None
         self.is_initialized = False
     
     async def initialize(self):
@@ -52,8 +53,11 @@ class MappingService:
             # Step 4: Generate ICD-11 embeddings
             logger.info("Generating ICD-11 embeddings...")
             self._generate_icd11_embeddings()
+
+            # Step 5: Generate NAMASTE embeddings
+            self._generate_namaste_embeddings()
             
-            # Step 5: Load embeddings into mapper
+            # Step 6: Load embeddings into mapper
             mapper.load_icd11_embeddings(self.icd11_embeddings, self.icd11_codes)
             
             self.is_initialized = True
@@ -106,6 +110,64 @@ class MappingService:
         self.icd11_embeddings = embedder.encode_batch(preprocessed_texts)
         
         logger.info(f"Generated embeddings with shape: {self.icd11_embeddings.shape}")
+    
+    def _generate_namaste_embeddings(self):
+        """Generate and cache embeddings for all NAMASTE codes"""
+        # Try to load from cache first
+        try:
+            cache_path = Path(settings.namaste_data_path).parent / "namaste_embeddings.npy"
+            if cache_path.exists():
+                logger.info(f"Loading cached NAMASTE embeddings from {cache_path}...")
+                cached_embeddings = np.load(cache_path)
+                if cached_embeddings.shape[0] == len(self.namaste_codes):
+                    self.namaste_embeddings = cached_embeddings
+                    logger.info(f"Loaded cached embeddings with shape: {self.namaste_embeddings.shape}")
+                    return
+                else:
+                    logger.warning(f"Cached embeddings count ({cached_embeddings.shape[0]}) mismatch ({len(self.namaste_codes)}). Regenerating...")
+        except Exception as e:
+            logger.warning(f"Failed to load cached embeddings: {e}")
+
+        logger.info(f"Generating embeddings for {len(self.namaste_codes)} NAMASTE codes...")
+        
+        # Prepare text for embedding
+        namaste_texts = [
+            f"{code.get('name', '')} {code.get('name_english', '')} {code.get('description', '')}"
+            for code in self.namaste_codes
+        ]
+        
+        # Process in batches to handle large dataset (7000+ codes)
+        batch_size = 64
+        all_embeddings = []
+        total = len(namaste_texts)
+        
+        if total == 0:
+            self.namaste_embeddings = np.array([])
+            return
+
+        for i in range(0, total, batch_size):
+            batch = namaste_texts[i:i + batch_size]
+            # Preprocess
+            preprocessed_batch = preprocessor.preprocess_batch(batch)
+            # Encode
+            batch_embeddings = embedder.encode_batch(preprocessed_batch)
+            all_embeddings.append(batch_embeddings)
+            
+            if (i // batch_size) % 10 == 0:
+                logger.info(f"Processed {min(i + batch_size, total)}/{total} codes")
+        
+        if all_embeddings:
+            self.namaste_embeddings = np.vstack(all_embeddings)
+            logger.info(f"Generated NAMASTE embeddings with shape: {self.namaste_embeddings.shape}")
+            
+            # Save to cache
+            try:
+                np.save(cache_path, self.namaste_embeddings)
+                logger.info(f"Saved NAMASTE embeddings to {cache_path}")
+            except Exception as e:
+                logger.error(f"Failed to save embeddings cache: {e}")
+        else:
+            self.namaste_embeddings = np.array([])
     
     async def map_namaste_to_icd11(
         self,
@@ -370,19 +432,16 @@ class MappingService:
             # Generate query embedding
             query_embedding = embedder.encode(preprocessed_query)
             
-            # Generate embeddings for AYUSH codes if not cached
-            ayush_texts = [
-                f"{code.get('name', '')} {code.get('name_english', '')} {code.get('description', '')}"
-                for code in self.namaste_codes
-            ]
+            # Use cached embeddings
+            if self.namaste_embeddings is None:
+                logger.warning("NAMASTE embeddings not found, regenerating (this should be cached)...")
+                self._generate_namaste_embeddings()
             
-            # Preprocess and encode
-            preprocessed_texts = preprocessor.preprocess_batch(ayush_texts)
-            ayush_embeddings = embedder.encode_batch(preprocessed_texts)
+            ayush_embeddings = self.namaste_embeddings
             
             # Calculate similarities
             from sklearn.metrics.pairwise import cosine_similarity
-            similarities = cosine_similarity([query_embedding], ayush_embeddings)[0]
+            similarities = cosine_similarity(query_embedding, ayush_embeddings)[0]
             
             # Get top-k indices
             top_indices = np.argsort(similarities)[-top_k:][::-1]
