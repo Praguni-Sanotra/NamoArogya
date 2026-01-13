@@ -1,36 +1,13 @@
 /**
- * Authentication Service - Hybrid Version
+ * Authentication Service - PostgreSQL Version
  * Handles user authentication, token generation, and password management
- * Falls back to PostgreSQL if MongoDB is not available
  */
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
+const { pgPool } = require('../config/database');
 const { ApiError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
-
-// Check if MongoDB is connected
-function isMongoDBConnected() {
-    return mongoose.connection.readyState === 1;
-}
-
-// Lazy load User model and PostgreSQL service
-let User;
-let pgAuthService;
-
-try {
-    User = require('../models/mongodb/User');
-} catch (error) {
-    logger.warn('MongoDB User model not available');
-}
-
-// Load PostgreSQL auth service as fallback
-try {
-    pgAuthService = require('./authService.postgres');
-} catch (error) {
-    logger.warn('PostgreSQL auth service not available');
-}
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
@@ -58,7 +35,7 @@ async function comparePassword(password, hash) {
 function generateAccessToken(user) {
     return jwt.sign(
         {
-            id: user._id || user.id,
+            id: user.id,
             email: user.email,
             role: user.role,
             name: user.name,
@@ -74,7 +51,7 @@ function generateAccessToken(user) {
 function generateRefreshToken(user) {
     return jwt.sign(
         {
-            id: user._id || user.id,
+            id: user.id,
             email: user.email,
         },
         JWT_REFRESH_SECRET,
@@ -94,22 +71,21 @@ function verifyRefreshToken(token) {
 }
 
 /**
- * Login user - Hybrid version
+ * Login user - PostgreSQL version
  */
 async function login(email, password, role) {
-    // Use PostgreSQL if MongoDB is not connected
-    if (!isMongoDBConnected() && pgAuthService) {
-        logger.info('Using PostgreSQL authentication');
-        return pgAuthService.login(email, password, role);
-    }
-
     try {
         // Find user by email and role
-        const user = await User.findOne({ email, role });
+        const result = await pgPool.query(
+            'SELECT * FROM users WHERE email = $1 AND role = $2',
+            [email, role]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             throw new ApiError('Invalid credentials', 401);
         }
+
+        const user = result.rows[0];
 
         // Verify password
         const isPasswordValid = await comparePassword(password, user.password_hash);
@@ -122,14 +98,13 @@ async function login(email, password, role) {
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
-        // Convert to plain object and remove password hash
-        const userObject = user.toObject();
-        delete userObject.password_hash;
+        // Remove password hash from response
+        const { password_hash, ...userWithoutPassword } = user;
 
         logger.info(`User logged in: ${user.email} (${user.role})`);
 
         return {
-            user: userObject,
+            user: userWithoutPassword,
             token: accessToken,
             refreshToken,
         };
@@ -149,11 +124,16 @@ async function refreshAccessToken(refreshToken) {
         const decoded = verifyRefreshToken(refreshToken);
 
         // Get user from database
-        const user = await User.findById(decoded.id);
+        const result = await pgPool.query(
+            'SELECT * FROM users WHERE id = $1',
+            [decoded.id]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             throw new ApiError('User not found', 404);
         }
+
+        const user = result.rows[0];
 
         // Generate new access token
         const accessToken = generateAccessToken(user);
@@ -174,11 +154,16 @@ async function refreshAccessToken(refreshToken) {
 async function changePassword(userId, oldPassword, newPassword) {
     try {
         // Get user
-        const user = await User.findById(userId);
+        const result = await pgPool.query(
+            'SELECT * FROM users WHERE id = $1',
+            [userId]
+        );
 
-        if (!user) {
+        if (result.rows.length === 0) {
             throw new ApiError('User not found', 404);
         }
+
+        const user = result.rows[0];
 
         // Verify old password
         const isPasswordValid = await comparePassword(oldPassword, user.password_hash);
@@ -191,9 +176,10 @@ async function changePassword(userId, oldPassword, newPassword) {
         const newPasswordHash = await hashPassword(newPassword);
 
         // Update password
-        user.password_hash = newPasswordHash;
-        user.updated_at = new Date();
-        await user.save();
+        await pgPool.query(
+            'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+            [newPasswordHash, userId]
+        );
 
         logger.info(`Password changed for user: ${userId}`);
 
@@ -213,9 +199,12 @@ async function createUser(userData) {
         const { email, password, name, role, specialty, license_number } = userData;
 
         // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await pgPool.query(
+            'SELECT * FROM users WHERE email = $1',
+            [email]
+        );
 
-        if (existingUser) {
+        if (existingUser.rows.length > 0) {
             throw new ApiError('User already exists', 409);
         }
 
@@ -223,24 +212,21 @@ async function createUser(userData) {
         const passwordHash = await hashPassword(password);
 
         // Create user
-        const user = new User({
-            email,
-            password_hash: passwordHash,
-            name,
-            role,
-            specialty,
-            license_number
-        });
+        const result = await pgPool.query(
+            `INSERT INTO users (email, password_hash, name, role, specialty, license_number, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+             RETURNING *`,
+            [email, passwordHash, name, role, specialty, license_number]
+        );
 
-        await user.save();
+        const user = result.rows[0];
 
         logger.info(`New user created: ${email} (${role})`);
 
         // Return user without password
-        const userObject = user.toObject();
-        delete userObject.password_hash;
+        const { password_hash, ...userWithoutPassword } = user;
 
-        return userObject;
+        return userWithoutPassword;
     } catch (error) {
         if (error instanceof ApiError) throw error;
         logger.error('User creation error:', error);

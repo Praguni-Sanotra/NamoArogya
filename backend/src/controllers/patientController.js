@@ -1,13 +1,35 @@
 /**
- * Patient Controller
+ * Patient Controller - Hybrid Version
  * Handles patient-related HTTP requests
+ * Falls back to PostgreSQL if MongoDB is not available
  */
 
-const Patient = require('../models/mongodb/Patient');
+const mongoose = require('mongoose');
 const aiService = require('../services/aiService');
 const { successResponse, errorResponse } = require('../utils/response');
 const { ApiError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+
+// Check if MongoDB is connected
+function isMongoDBConnected() {
+    return mongoose.connection.readyState === 1;
+}
+
+// Lazy load models and services
+let Patient;
+let pgPatientService;
+
+try {
+    Patient = require('../models/mongodb/Patient');
+} catch (error) {
+    logger.warn('MongoDB Patient model not available');
+}
+
+try {
+    pgPatientService = require('../services/patientService.postgres');
+} catch (error) {
+    logger.warn('PostgreSQL patient service not available');
+}
 
 /**
  * Create new patient with auto code matching
@@ -73,6 +95,16 @@ async function getPatients(req, res, next) {
         } = req.query;
 
         const doctorId = req.user.id;
+
+        // Use PostgreSQL if MongoDB is not connected
+        if (!isMongoDBConnected() && pgPatientService) {
+            logger.info('Using PostgreSQL for patient data');
+            const result = await pgPatientService.getPatients(doctorId, {
+                page, limit, status, search, sortBy, sortOrder
+            });
+            return successResponse(res, result, 'Patients retrieved successfully', 200);
+        }
+
         const query = { doctor_id: doctorId };
 
         // Filter by status

@@ -1,11 +1,33 @@
 /**
- * Dashboard Controller
+ * Dashboard Controller - Hybrid Version
  * Handles dashboard statistics and analytics
+ * Falls back to PostgreSQL if MongoDB is not available
  */
 
-const Patient = require('../models/mongodb/Patient');
+const mongoose = require('mongoose');
 const { successResponse } = require('../utils/response');
 const logger = require('../utils/logger');
+
+// Check if MongoDB is connected
+function isMongoDBConnected() {
+    return mongoose.connection.readyState === 1;
+}
+
+// Lazy load models and services
+let Patient;
+let pgPatientService;
+
+try {
+    Patient = require('../models/mongodb/Patient');
+} catch (error) {
+    logger.warn('MongoDB Patient model not available');
+}
+
+try {
+    pgPatientService = require('../services/patientService.postgres');
+} catch (error) {
+    logger.warn('PostgreSQL patient service not available');
+}
 
 /**
  * Get dashboard statistics for doctor
@@ -13,6 +35,14 @@ const logger = require('../utils/logger');
 async function getDoctorStats(req, res, next) {
     try {
         const doctorId = req.user.id;
+
+        // Use PostgreSQL if MongoDB is not connected
+        if (!isMongoDBConnected() && pgPatientService) {
+            logger.info('Using PostgreSQL for dashboard stats');
+            const stats = await pgPatientService.getDashboardStats(doctorId);
+            return successResponse(res, { stats }, 'Dashboard statistics retrieved successfully', 200);
+        }
+
         const now = new Date();
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);

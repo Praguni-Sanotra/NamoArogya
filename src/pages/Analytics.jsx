@@ -1,18 +1,20 @@
 /**
  * Analytics Dashboard Page
- * Data visualization and insights
+ * Data visualization and insights with Code Data tab
  */
 
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Download, Calendar } from 'lucide-react';
+import { Download, Calendar, BarChart3, Database } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import CodeDataTab from '../components/CodeDataTab';
 import axios from 'axios';
 
 const Analytics = () => {
     const { user } = useSelector((state) => state.auth);
+    const [activeTab, setActiveTab] = useState('charts'); // 'charts' or 'codes'
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState('6months');
     const [stats, setStats] = useState(null);
@@ -23,9 +25,11 @@ const Analytics = () => {
     });
 
     useEffect(() => {
-        fetchAnalyticsData();
-        fetchStats();
-    }, [period]);
+        if (activeTab === 'charts') {
+            fetchAnalyticsData();
+            fetchStats();
+        }
+    }, [period, activeTab]);
 
     const fetchStats = async () => {
         try {
@@ -264,160 +268,202 @@ const Analytics = () => {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-neutral-900">Analytics Dashboard</h1>
+                    <h1 className="text-2xl font-bold text-neutral-900">Medical Code Database</h1>
                     <p className="text-neutral-600 mt-1">
-                        Insights and trends from your healthcare data
+                        {activeTab === 'charts'
+                            ? 'Insights and trends from your healthcare data'
+                            : 'Browse and search medical code databases'
+                        }
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <select className="input w-48" value={period} onChange={handlePeriodChange}>
-                        <option value="6months">Last 6 Months</option>
-                        <option value="1year">Last Year</option>
-                        <option value="all">All Time</option>
-                    </select>
-                    <Button variant="outline" icon={Download} onClick={handleExport}>
-                        Export
-                    </Button>
-                </div>
+                {activeTab === 'charts' && (
+                    <div className="flex items-center gap-3">
+                        <select className="input w-48" value={period} onChange={handlePeriodChange}>
+                            <option value="6months">Last 6 Months</option>
+                            <option value="1year">Last Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                        <Button variant="outline" icon={Download} onClick={handleExport}>
+                            Export
+                        </Button>
+                    </div>
+                )}
             </div>
 
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {loading || !stats ? (
-                    // Loading skeleton
-                    [1, 2, 3, 4].map((i) => (
-                        <Card key={i}>
-                            <div className="animate-pulse">
-                                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                                <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            {/* Tab Navigation */}
+            <div className="border-b border-neutral-200">
+                <nav className="flex gap-8">
+                    <button
+                        onClick={() => setActiveTab('charts')}
+                        className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'charts'
+                            ? 'border-primary-600 text-primary-600'
+                            : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
+                            }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <BarChart3 size={18} />
+                            Analytics Charts
+                        </div>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('codes')}
+                        className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'codes'
+                            ? 'border-primary-600 text-primary-600'
+                            : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
+                            }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Database size={18} />
+                            Code Data
+                        </div>
+                    </button>
+                </nav>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'codes' ? (
+                <CodeDataTab />
+            ) : (
+                <>
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        {loading || !stats ? (
+                            // Loading skeleton
+                            [1, 2, 3, 4].map((i) => (
+                                <Card key={i}>
+                                    <div className="animate-pulse">
+                                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                                        <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                                    </div>
+                                </Card>
+                            ))
+                        ) : (
+                            <>
+                                <Card hover>
+                                    <p className="text-sm text-neutral-600 mb-1">Total Patients</p>
+                                    <p className="text-3xl font-bold text-neutral-900">{stats.totalPatients.value}</p>
+                                    <p className="text-sm text-secondary-600 mt-2">
+                                        {stats.totalPatients.change >= 0 ? '↑' : '↓'} {Math.abs(stats.totalPatients.change)}% this month
+                                    </p>
+                                </Card>
+                                <Card hover>
+                                    <p className="text-sm text-neutral-600 mb-1">Dual Codings</p>
+                                    <p className="text-3xl font-bold text-neutral-900">{stats.dualCodings.value}</p>
+                                    <p className="text-sm text-secondary-600 mt-2">
+                                        {stats.dualCodings.change >= 0 ? '↑' : '↓'} {Math.abs(stats.dualCodings.change)}% this month
+                                    </p>
+                                </Card>
+                                <Card hover>
+                                    <p className="text-sm text-neutral-600 mb-1">Active Cases</p>
+                                    <p className="text-3xl font-bold text-neutral-900">{stats.activeCases.value}</p>
+                                    <p className="text-sm text-secondary-600 mt-2">
+                                        {stats.activeCases.change >= 0 ? '↑' : '↓'} {Math.abs(stats.activeCases.change)}% this month
+                                    </p>
+                                </Card>
+                                <Card hover>
+                                    <p className="text-sm text-neutral-600 mb-1">This Month</p>
+                                    <p className="text-3xl font-bold text-neutral-900">{stats.thisMonth.value}</p>
+                                    <p className="text-sm text-secondary-600 mt-2">
+                                        {stats.thisMonth.change >= 0 ? '↑' : '↓'} {Math.abs(stats.thisMonth.change)}% from last
+                                    </p>
+                                </Card>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Charts Row 1 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Patient Trends */}
+                        <Card title="Patient Trends" subtitle="Monthly patient visits over time">
+                            {loading ? (
+                                <div className="h-[300px] flex items-center justify-center">
+                                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                                </div>
+                            ) : analyticsData.patientTrends.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <LineChart data={analyticsData.patientTrends}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                        <XAxis dataKey="month" stroke="#64748b" />
+                                        <YAxis stroke="#64748b" />
+                                        <Tooltip />
+                                        <Legend />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="patients"
+                                            stroke="#0891b2"
+                                            strokeWidth={2}
+                                            dot={{ fill: '#0891b2', r: 4 }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-[300px] flex items-center justify-center text-gray-500">
+                                    No patient data available for the selected period
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Diagnosis Distribution */}
+                        <Card title="Diagnosis Distribution" subtitle="Breakdown by AYUSH code category">
+                            {loading ? (
+                                <div className="h-[300px] flex items-center justify-center">
+                                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                                </div>
+                            ) : analyticsData.diagnosisDistribution.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <PieChart>
+                                        <Pie
+                                            data={analyticsData.diagnosisDistribution}
+                                            cx="50%"
+                                            cy="50%"
+                                            labelLine={false}
+                                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                            outerRadius={100}
+                                            fill="#8884d8"
+                                            dataKey="value"
+                                        >
+                                            {analyticsData.diagnosisDistribution.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-[300px] flex items-center justify-center text-gray-500">
+                                    No diagnosis data available. Add patients with AYUSH codes.
+                                </div>
+                            )}
+                        </Card>
+                    </div>
+
+                    {/* Charts Row 2 */}
+                    <Card title="Dual Coding Statistics" subtitle="AYUSH vs ICD-11 coding trends">
+                        {loading ? (
+                            <div className="h-[300px] flex items-center justify-center">
+                                <div className="animate-pulse text-gray-400">Loading chart data...</div>
                             </div>
-                        </Card>
-                    ))
-                ) : (
-                    <>
-                        <Card hover>
-                            <p className="text-sm text-neutral-600 mb-1">Total Patients</p>
-                            <p className="text-3xl font-bold text-neutral-900">{stats.totalPatients.value}</p>
-                            <p className="text-sm text-secondary-600 mt-2">
-                                {stats.totalPatients.change >= 0 ? '↑' : '↓'} {Math.abs(stats.totalPatients.change)}% this month
-                            </p>
-                        </Card>
-                        <Card hover>
-                            <p className="text-sm text-neutral-600 mb-1">Dual Codings</p>
-                            <p className="text-3xl font-bold text-neutral-900">{stats.dualCodings.value}</p>
-                            <p className="text-sm text-secondary-600 mt-2">
-                                {stats.dualCodings.change >= 0 ? '↑' : '↓'} {Math.abs(stats.dualCodings.change)}% this month
-                            </p>
-                        </Card>
-                        <Card hover>
-                            <p className="text-sm text-neutral-600 mb-1">Active Cases</p>
-                            <p className="text-3xl font-bold text-neutral-900">{stats.activeCases.value}</p>
-                            <p className="text-sm text-secondary-600 mt-2">
-                                {stats.activeCases.change >= 0 ? '↑' : '↓'} {Math.abs(stats.activeCases.change)}% this month
-                            </p>
-                        </Card>
-                        <Card hover>
-                            <p className="text-sm text-neutral-600 mb-1">This Month</p>
-                            <p className="text-3xl font-bold text-neutral-900">{stats.thisMonth.value}</p>
-                            <p className="text-sm text-secondary-600 mt-2">
-                                {stats.thisMonth.change >= 0 ? '↑' : '↓'} {Math.abs(stats.thisMonth.change)}% from last
-                            </p>
-                        </Card>
-                    </>
-                )}
-            </div>
-
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Patient Trends */}
-                <Card title="Patient Trends" subtitle="Monthly patient visits over time">
-                    {loading ? (
-                        <div className="h-[300px] flex items-center justify-center">
-                            <div className="animate-pulse text-gray-400">Loading chart data...</div>
-                        </div>
-                    ) : analyticsData.patientTrends.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={analyticsData.patientTrends}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                                <XAxis dataKey="month" stroke="#64748b" />
-                                <YAxis stroke="#64748b" />
-                                <Tooltip />
-                                <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="patients"
-                                    stroke="#0891b2"
-                                    strokeWidth={2}
-                                    dot={{ fill: '#0891b2', r: 4 }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-[300px] flex items-center justify-center text-gray-500">
-                            No patient data available for the selected period
-                        </div>
-                    )}
-                </Card>
-
-                {/* Diagnosis Distribution */}
-                <Card title="Diagnosis Distribution" subtitle="Breakdown by AYUSH code category">
-                    {loading ? (
-                        <div className="h-[300px] flex items-center justify-center">
-                            <div className="animate-pulse text-gray-400">Loading chart data...</div>
-                        </div>
-                    ) : analyticsData.diagnosisDistribution.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={analyticsData.diagnosisDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                                    outerRadius={100}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {analyticsData.diagnosisDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="h-[300px] flex items-center justify-center text-gray-500">
-                            No diagnosis data available. Add patients with AYUSH codes.
-                        </div>
-                    )}
-                </Card>
-            </div>
-
-            {/* Charts Row 2 */}
-            <Card title="Dual Coding Statistics" subtitle="AYUSH vs ICD-11 coding trends">
-                {loading ? (
-                    <div className="h-[300px] flex items-center justify-center">
-                        <div className="animate-pulse text-gray-400">Loading chart data...</div>
-                    </div>
-                ) : analyticsData.dualCodingStats.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={analyticsData.dualCodingStats}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                            <XAxis dataKey="month" stroke="#64748b" />
-                            <YAxis stroke="#64748b" />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="namaste" fill="#0891b2" name="AYUSH Codes" />
-                            <Bar dataKey="icd11" fill="#22c55e" name="ICD-11 Codes" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="h-[300px] flex items-center justify-center text-gray-500">
-                        No coding data available for the selected period
-                    </div>
-                )}
-            </Card>
+                        ) : analyticsData.dualCodingStats.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={analyticsData.dualCodingStats}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <XAxis dataKey="month" stroke="#64748b" />
+                                    <YAxis stroke="#64748b" />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="namaste" fill="#0891b2" name="AYUSH Codes" />
+                                    <Bar dataKey="icd11" fill="#22c55e" name="ICD-11 Codes" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-[300px] flex items-center justify-center text-gray-500">
+                                No coding data available for the selected period
+                            </div>
+                        )}
+                    </Card>
+                </>
+            )}
         </div>
     );
 };

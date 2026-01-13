@@ -34,10 +34,10 @@ const Sidebar = () => {
             name: 'Dual Coding',
             path: '/dual-coding',
             icon: FileText,
-            roles: ['doctor', 'admin'],
+            roles: ['doctor'], // Only available for doctors, not admins
         },
         {
-            name: 'Analytics',
+            name: 'Medical Code Database',
             path: '/analytics',
             icon: BarChart3,
             roles: ['doctor', 'admin'],
