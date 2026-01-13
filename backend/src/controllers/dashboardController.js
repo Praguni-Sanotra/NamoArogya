@@ -175,6 +175,13 @@ async function getAnalytics(req, res, next) {
                 monthsToShow = 6;
         }
 
+        // Use PostgreSQL if MongoDB is not connected
+        if (!isMongoDBConnected() && pgPatientService) {
+            logger.info('Using PostgreSQL for analytics data');
+            const result = await pgPatientService.getAnalytics(doctorId, startDate, monthsToShow);
+            return successResponse(res, result, 'Analytics data retrieved successfully', 200);
+        }
+
         // Get patient trends (monthly counts)
         const patientTrends = await Patient.aggregate([
             {

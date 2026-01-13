@@ -67,7 +67,7 @@ const AdminDashboard = () => {
         setLoading(true);
         const apis = [
             { name: 'Backend API', url: 'http://localhost:5000/api/health', type: 'REST' },
-            { name: 'AYUSH AI Service', url: 'http://localhost:8001/api/v1/health', type: 'AI/ML' },
+            { name: 'AYUSH AI Service', url: 'http://localhost:8000/api/v1/health', type: 'AI/ML' },
             { name: 'Auth Service', url: 'http://localhost:5000/api/auth/health', type: 'Auth' },
             { name: 'Patient Service', url: 'http://localhost:5000/api/patients/health', type: 'Data' },
             { name: 'Dashboard Service', url: 'http://localhost:5000/api/dashboard/health', type: 'Analytics' },

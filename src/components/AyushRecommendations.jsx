@@ -9,7 +9,7 @@ const AyushRecommendations = () => {
     const [processingTime, setProcessingTime] = useState(0);
     const [topK, setTopK] = useState(5);
 
-    const API_BASE_URL = 'http://localhost:8001/api/v1';
+    const API_BASE_URL = 'http://localhost:8000/api/v1';
 
     const handleGetRecommendations = async () => {
         if (!symptoms.trim()) {

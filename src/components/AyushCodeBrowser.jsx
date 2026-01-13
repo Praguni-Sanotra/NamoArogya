@@ -11,7 +11,7 @@ const AyushCodeBrowser = () => {
     const [showModal, setShowModal] = useState(false);
     const [pagination, setPagination] = useState({ offset: 0, limit: 20, total: 0, hasMore: false });
 
-    const API_BASE_URL = 'http://localhost:8001/api/v1';
+    const API_BASE_URL = 'http://localhost:8000/api/v1';
 
     // Fetch categories on mount
     useEffect(() => {

@@ -314,11 +314,96 @@ function parsePatientData(patient) {
     };
 }
 
+/**
+ * Get analytics data for charts
+ */
+async function getAnalytics(doctorId, startDate, monthsToShow) {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Get patient trends (monthly counts)
+    const patientTrendsData = [];
+    for (let i = 0; i < monthsToShow; i++) {
+        const date = new Date(startDate);
+        date.setMonth(startDate.getMonth() + i);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const nextMonth = month === 12 ? 1 : month + 1;
+        const nextYear = month === 12 ? year + 1 : year;
+
+        const result = await pgPool.query(
+            `SELECT COUNT(*) FROM patients 
+             WHERE doctor_id = $1 
+             AND EXTRACT(YEAR FROM created_at) = $2 
+             AND EXTRACT(MONTH FROM created_at) = $3`,
+            [doctorId, year, month]
+        );
+
+        patientTrendsData.push({
+            month: monthNames[month - 1],
+            patients: parseInt(result.rows[0].count)
+        });
+    }
+
+    // Get diagnosis distribution (top categories from AYUSH codes)
+    const diagnosisResult = await pgPool.query(
+        `SELECT category, COUNT(*) as count
+         FROM (
+             SELECT jsonb_array_elements(matched_ayush_codes::jsonb)->>'category' as category
+             FROM patients
+             WHERE doctor_id = $1 
+             AND matched_ayush_codes::text != '[]'
+         ) AS categories
+         WHERE category IS NOT NULL
+         GROUP BY category
+         ORDER BY count DESC
+         LIMIT 5`,
+        [doctorId]
+    );
+
+    const diagnosisDistributionData = diagnosisResult.rows.map(row => ({
+        name: row.category || 'Uncategorized',
+        value: parseInt(row.count)
+    }));
+
+    // Get dual coding stats (patients with AYUSH codes over time)
+    const dualCodingStatsData = [];
+    for (let i = 0; i < monthsToShow; i++) {
+        const date = new Date(startDate);
+        date.setMonth(startDate.getMonth() + i);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+
+        const result = await pgPool.query(
+            `SELECT 
+                COUNT(CASE WHEN matched_ayush_codes::text != '[]' THEN 1 END) as ayush,
+                COUNT(CASE WHEN matched_icd11_codes::text != '[]' THEN 1 END) as icd11
+             FROM patients 
+             WHERE doctor_id = $1 
+             AND EXTRACT(YEAR FROM created_at) = $2 
+             AND EXTRACT(MONTH FROM created_at) = $3`,
+            [doctorId, year, month]
+        );
+
+        dualCodingStatsData.push({
+            month: monthNames[month - 1],
+            namaste: parseInt(result.rows[0].ayush) || 0,
+            icd11: parseInt(result.rows[0].icd11) || 0
+        });
+    }
+
+    return {
+        patientTrends: patientTrendsData,
+        diagnosisDistribution: diagnosisDistributionData,
+        dualCodingStats: dualCodingStatsData
+    };
+}
+
 module.exports = {
     createPatient,
     getPatients,
     getPatientById,
     updatePatient,
     deletePatient,
-    getDashboardStats
+    getDashboardStats,
+    getAnalytics
 };

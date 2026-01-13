@@ -34,7 +34,7 @@ const DualCoding = () => {
 
         setNamasteLoading(true);
         try {
-            const response = await axios.get(`http://localhost:8001/api/v1/ayush/search`, {
+            const response = await axios.get(`http://localhost:8000/api/v1/ayush/search`, {
                 params: { query, limit: 10 }
             });
 
@@ -66,7 +66,7 @@ const DualCoding = () => {
 
         setIcd11Loading(true);
         try {
-            const response = await axios.get(`http://localhost:8001/api/v1/icd11/search`, {
+            const response = await axios.get(`http://localhost:8000/api/v1/icd11/search`, {
                 params: { query, limit: 10 }
             });
 
@@ -114,28 +114,28 @@ const DualCoding = () => {
         }
 
         try {
-            // Use the /recommend endpoint to get related AYUSH codes
-            // These can help identify the medical domain for ICD-11 mapping
-            const response = await axios.post(`http://localhost:8001/api/v1/recommend`, {
+            // Use the /map endpoint to get ICD-11 suggestions
+            const response = await axios.post(`http://localhost:8000/api/v1/map`, {
+                namaste_code: ayushCode.code,
+                disease_name: description,
                 symptoms: description,
                 top_k: 5
             });
 
-            if (response.data && response.data.recommendations && response.data.recommendations.length > 0) {
-                // Create suggestions based on the AYUSH recommendations
-                // These show related conditions that can guide ICD-11 selection
-                const suggestions = response.data.recommendations.map((item, index) => ({
-                    code: item.code,
-                    description: `${item.name || item.description} (Related AYUSH code - use for ICD-11 reference)`,
-                    category: item.category || 'AYUSH Reference',
-                    confidence: item.confidence || (1.0 - index * 0.1),
-                    isReference: true // Mark as reference, not actual ICD-11
+            if (response.data && response.data.suggestions && response.data.suggestions.length > 0) {
+                // Map the ICD-11 suggestions to our format
+                const suggestions = response.data.suggestions.map((item) => ({
+                    code: item.icd_code,
+                    description: item.icd_title || item.icd_definition,
+                    category: item.icd_chapter || 'ICD-11',
+                    confidence: item.confidence_score,
+                    isReference: false // These are actual ICD-11 codes
                 }));
 
                 // Add info message at the top
                 const infoMsg = {
                     code: 'INFO',
-                    description: `🔍 Showing ${suggestions.length} related AYUSH codes for "${ayushCode.code}". Use these as reference to manually search for corresponding ICD-11 codes in the search box above.`,
+                    description: `🤖 AI-Generated ICD-11 suggestions for "${ayushCode.code}". Select the most appropriate match or search manually for more options.`,
                     category: 'AI Suggestions',
                     confidence: 1.0,
                     isInfo: true
@@ -147,7 +147,7 @@ const DualCoding = () => {
                 // No recommendations found
                 const infoSuggestion = {
                     code: 'INFO',
-                    description: `Selected: ${ayushCode.code} - ${description}. No automatic suggestions available. Please search for ICD-11 codes manually using the search box above.`,
+                    description: `Selected: ${ayushCode.code} - ${description}. No automatic ICD-11 suggestions available. Please search for ICD-11 codes manually using the search box above.`,
                     category: 'Information',
                     confidence: 1.0,
                     isInfo: true
@@ -159,7 +159,7 @@ const DualCoding = () => {
             console.error('Failed to get semantic suggestions:', error);
             const errorSuggestion = {
                 code: 'ERROR',
-                description: `Selected: ${ayushCode.code}. Unable to fetch automatic suggestions. Please search for ICD-11 codes manually.`,
+                description: `Selected: ${ayushCode.code}. Unable to fetch automatic ICD-11 suggestions (${error.message}). Please search for ICD-11 codes manually.`,
                 category: 'Error',
                 confidence: 1.0,
                 isInfo: true
@@ -329,10 +329,10 @@ const DualCoding = () => {
                         {semanticSuggestions.length > 1 && !semanticSuggestions[0].isInfo && (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                 <p className="text-sm text-blue-800 font-medium">
-                                    🤖 AI-Suggested Related AYUSH Codes
+                                    🤖 AI-Generated ICD-11 Code Suggestions
                                 </p>
                                 <p className="text-xs text-blue-600 mt-1">
-                                    Use these related conditions as reference to search for ICD-11 codes
+                                    These are semantically matched ICD-11 codes based on the selected AYUSH code
                                 </p>
                             </div>
                         )}

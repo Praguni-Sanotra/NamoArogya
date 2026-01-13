@@ -53,9 +53,11 @@ const PatientRecords = () => {
     const columns = [
         {
             header: 'Patient ID',
-            accessor: 'id',
+            accessor: 'patient_id',
             render: (row) => (
-                <span className="font-mono text-sm">{row.id || 'P-001'}</span>
+                <span className="font-mono text-sm font-semibold text-primary-600">
+                    {row.patient_id || 'N/A'}
+                </span>
             ),
         },
         {

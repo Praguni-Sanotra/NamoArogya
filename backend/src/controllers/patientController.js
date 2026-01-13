@@ -41,27 +41,39 @@ async function createPatient(req, res, next) {
 
         // Get AI code recommendations if not provided
         if (!patientData.matched_ayush_codes || patientData.matched_ayush_codes.length === 0) {
-            const aiResult = await aiService.getCodeRecommendations(
-                patientData.symptoms,
-                patientData.medical_history,
-                5
-            );
+            try {
+                const aiResult = await aiService.getCodeRecommendations(
+                    patientData.symptoms,
+                    patientData.medical_history,
+                    5
+                );
 
-            if (aiResult.success && aiResult.recommendations.length > 0) {
-                patientData.matched_ayush_codes = aiResult.recommendations.map(rec => ({
-                    code: rec.code,
-                    name: rec.name,
-                    name_english: rec.name_english || '',
-                    description: rec.description || '',
-                    category: rec.category || '',
-                    confidence: rec.confidence,
-                    confidence_level: rec.confidence_level,
-                    selected: false // Doctor must manually select
-                }));
+                if (aiResult.success && aiResult.recommendations.length > 0) {
+                    patientData.matched_ayush_codes = aiResult.recommendations.map(rec => ({
+                        code: rec.code,
+                        name: rec.name,
+                        name_english: rec.name_english || '',
+                        description: rec.description || '',
+                        category: rec.category || '',
+                        confidence: rec.confidence,
+                        confidence_level: rec.confidence_level,
+                        selected: false // Doctor must manually select
+                    }));
+                }
+            } catch (aiError) {
+                logger.warn('AI recommendations failed:', aiError.message);
+                // Continue without AI recommendations
             }
         }
 
-        // Create patient
+        // Use PostgreSQL if MongoDB is not connected
+        if (!isMongoDBConnected() && pgPatientService) {
+            logger.info('Using PostgreSQL to create patient');
+            const patient = await pgPatientService.createPatient(patientData, doctorId);
+            return successResponse(res, { patient }, 'Patient created successfully', 201);
+        }
+
+        // Create patient with MongoDB
         const patient = new Patient({
             ...patientData,
             doctor_id: doctorId
