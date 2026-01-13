@@ -8,6 +8,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Activity, Mail, Lock, User, UserCog, Stethoscope, FileText } from 'lucide-react';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const Signup = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -50,7 +52,7 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/signup', {
+            const response = await axios.post(`${API_URL}/auth/signup`, {
                 email: formData.email,
                 password: formData.password,
                 name: formData.name,
@@ -238,8 +240,8 @@ const Signup = () => {
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, role: 'doctor' }))}
                                 className={`p-4 border-2 rounded-lg flex flex-col items-center gap-2 transition-all ${formData.role === 'doctor'
-                                        ? 'border-primary-500 bg-primary-50'
-                                        : 'border-neutral-200 hover:border-neutral-300'
+                                    ? 'border-primary-500 bg-primary-50'
+                                    : 'border-neutral-200 hover:border-neutral-300'
                                     }`}
                             >
                                 <Stethoscope className={`w-6 h-6 ${formData.role === 'doctor' ? 'text-primary-600' : 'text-neutral-400'}`} />
@@ -251,8 +253,8 @@ const Signup = () => {
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, role: 'admin' }))}
                                 className={`p-4 border-2 rounded-lg flex flex-col items-center gap-2 transition-all ${formData.role === 'admin'
-                                        ? 'border-secondary-500 bg-secondary-50'
-                                        : 'border-neutral-200 hover:border-neutral-300'
+                                    ? 'border-secondary-500 bg-secondary-50'
+                                    : 'border-neutral-200 hover:border-neutral-300'
                                     }`}
                             >
                                 <UserCog className={`w-6 h-6 ${formData.role === 'admin' ? 'text-secondary-600' : 'text-neutral-400'}`} />

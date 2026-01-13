@@ -12,6 +12,9 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000/api/v1';
+
 const DualCoding = () => {
     const dispatch = useDispatch();
     const { selectedNAMASTECode, selectedICD11Code } = useSelector((state) => state.diagnosis);
@@ -34,7 +37,7 @@ const DualCoding = () => {
 
         setNamasteLoading(true);
         try {
-            const response = await axios.get(`http://localhost:8000/api/v1/ayush/search`, {
+            const response = await axios.get(`${AI_SERVICE_URL}/ayush/search`, {
                 params: { query, limit: 10 }
             });
 
@@ -66,7 +69,7 @@ const DualCoding = () => {
 
         setIcd11Loading(true);
         try {
-            const response = await axios.get(`http://localhost:8000/api/v1/icd11/search`, {
+            const response = await axios.get(`${AI_SERVICE_URL}/icd11/search`, {
                 params: { query, limit: 10 }
             });
 
@@ -115,7 +118,7 @@ const DualCoding = () => {
 
         try {
             // Use the /map endpoint to get ICD-11 suggestions
-            const response = await axios.post(`http://localhost:8000/api/v1/map`, {
+            const response = await axios.post(`${AI_SERVICE_URL}/map`, {
                 namaste_code: ayushCode.code,
                 disease_name: description,
                 symptoms: description,
@@ -187,7 +190,7 @@ const DualCoding = () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
             const response = await axios.post(
-                'http://localhost:5000/api/dual-coding',
+                `${API_URL}/dual-coding`,
                 {
                     ayush_code: selectedNAMASTECode.code,
                     ayush_description: selectedNAMASTECode.description,

@@ -9,6 +9,8 @@ import { useSelector } from 'react-redux';
 import { User, Phone, Mail, MapPin, FileText, Activity, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const AddPatient = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -67,7 +69,7 @@ const AddPatient = () => {
             if (user?.role === 'admin') {
                 try {
                     const token = localStorage.getItem('namoarogya_token');
-                    const response = await axios.get('http://localhost:5000/api/admin/users', {
+                    const response = await axios.get(`${API_URL}/admin/users`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
 
@@ -90,7 +92,7 @@ const AddPatient = () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
             const response = await axios.post(
-                'http://localhost:5000/api/patients/code-recommendations',
+                `${API_URL}/patients/code-recommendations`,
                 {
                     symptoms: formData.symptoms,
                     medical_history: formData.medical_history || null,
@@ -138,7 +140,7 @@ const AddPatient = () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
             const response = await axios.post(
-                'http://localhost:5000/api/patients',
+                `${API_URL}/patients`,
                 {
                     ...formData,
                     age: parseInt(formData.age),

@@ -15,6 +15,8 @@ import AyushRecommendations from '../components/AyushRecommendations';
 import { formatDate } from '../utils/helpers';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const DoctorDashboard = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -34,7 +36,7 @@ const DoctorDashboard = () => {
     const fetchDashboardStats = async () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get('http://localhost:5000/api/dashboard/stats', {
+            const response = await axios.get(`${API_URL}/dashboard/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

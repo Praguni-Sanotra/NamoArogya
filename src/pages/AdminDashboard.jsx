@@ -22,6 +22,9 @@ import Table from '../components/Table';
 import { formatDate } from '../utils/helpers';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://localhost:8000/api/v1';
+
 const AdminDashboard = () => {
     const { user } = useSelector((state) => state.auth);
     const [activeTab, setActiveTab] = useState('apis');
@@ -66,11 +69,11 @@ const AdminDashboard = () => {
     const fetchAPIStatus = async () => {
         setLoading(true);
         const apis = [
-            { name: 'Backend API', url: 'http://localhost:5000/api/health', type: 'REST' },
-            { name: 'AYUSH AI Service', url: 'http://localhost:8000/api/v1/health', type: 'AI/ML' },
-            { name: 'Auth Service', url: 'http://localhost:5000/api/auth/health', type: 'Auth' },
-            { name: 'Patient Service', url: 'http://localhost:5000/api/patients/health', type: 'Data' },
-            { name: 'Dashboard Service', url: 'http://localhost:5000/api/dashboard/health', type: 'Analytics' },
+            { name: 'Backend API', url: `${API_URL}/health`, type: 'REST' },
+            { name: 'AYUSH AI Service', url: `${AI_SERVICE_URL}/health`, type: 'AI/ML' },
+            { name: 'Auth Service', url: `${API_URL}/auth/health`, type: 'Auth' },
+            { name: 'Patient Service', url: `${API_URL}/patients/health`, type: 'Data' },
+            { name: 'Dashboard Service', url: `${API_URL}/dashboard/health`, type: 'Analytics' },
         ];
 
         const statusChecks = await Promise.all(
@@ -110,7 +113,7 @@ const AdminDashboard = () => {
             // Fetch users - with fallback
             let users = [];
             try {
-                const usersRes = await axios.get('http://localhost:5000/api/admin/users', { headers });
+                const usersRes = await axios.get(`${API_URL}/admin/users`, { headers });
                 users = usersRes.data.data?.users || usersRes.data.users || [];
             } catch (error) {
                 console.warn('Failed to fetch users:', error.message);
@@ -119,7 +122,7 @@ const AdminDashboard = () => {
             // Fetch patients - with fallback
             let patients = [];
             try {
-                const patientsRes = await axios.get('http://localhost:5000/api/patients?limit=100', { headers });
+                const patientsRes = await axios.get(`${API_URL}/patients?limit=100`, { headers });
                 patients = patientsRes.data.data?.patients || patientsRes.data.patients || [];
             } catch (error) {
                 console.warn('Failed to fetch patients:', error.message);
@@ -128,7 +131,7 @@ const AdminDashboard = () => {
             // Fetch stats - with fallback
             let stats = {};
             try {
-                const statsRes = await axios.get('http://localhost:5000/api/dashboard/stats', { headers });
+                const statsRes = await axios.get(`${API_URL}/dashboard/stats`, { headers });
                 stats = statsRes.data.data?.stats || statsRes.data.stats || {};
             } catch (error) {
                 console.warn('Failed to fetch stats:', error.message);
@@ -154,7 +157,7 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get('http://localhost:5000/api/admin/database-info', {
+            const response = await axios.get(`${API_URL}/admin/database-info`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -179,7 +182,7 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get('http://localhost:5000/api/admin/dual-coding-mappings', {
+            const response = await axios.get(`${API_URL}/admin/dual-coding-mappings`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

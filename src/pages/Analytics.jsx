@@ -12,6 +12,8 @@ import Button from '../components/Button';
 import CodeDataTab from '../components/CodeDataTab';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const Analytics = () => {
     const { user } = useSelector((state) => state.auth);
     const [activeTab, setActiveTab] = useState('charts'); // 'charts' or 'codes'
@@ -34,7 +36,7 @@ const Analytics = () => {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get('http://localhost:5000/api/dashboard/stats', {
+            const response = await axios.get(`${API_URL}/dashboard/stats`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -50,7 +52,7 @@ const Analytics = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get(`http://localhost:5000/api/dashboard/analytics?period=${period}`, {
+            const response = await axios.get(`${API_URL}/dashboard/analytics?period=${period}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

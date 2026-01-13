@@ -11,6 +11,8 @@ import { logoutUser } from '../store/slices/authSlice';
 import { getInitials, formatDate } from '../utils/helpers';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 const Header = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -26,7 +28,7 @@ const Header = () => {
     const fetchNotifications = async () => {
         try {
             const token = localStorage.getItem('namoarogya_token');
-            const response = await axios.get('http://localhost:5000/api/dashboard/recent-patients?limit=5', {
+            const response = await axios.get(`${API_URL}/dashboard/recent-patients?limit=5`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
