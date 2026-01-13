@@ -94,7 +94,8 @@ async function getPatients(req, res, next) {
             sortOrder = 'desc'
         } = req.query;
 
-        const doctorId = req.user.id;
+        // Admin users see all patients, doctors see only their patients
+        const doctorId = req.user.role === 'admin' ? null : req.user.id;
 
         // Use PostgreSQL if MongoDB is not connected
         if (!isMongoDBConnected() && pgPatientService) {
@@ -105,7 +106,7 @@ async function getPatients(req, res, next) {
             return successResponse(res, result, 'Patients retrieved successfully', 200);
         }
 
-        const query = { doctor_id: doctorId };
+        const query = doctorId ? { doctor_id: doctorId } : {};
 
         // Filter by status
         if (status) {

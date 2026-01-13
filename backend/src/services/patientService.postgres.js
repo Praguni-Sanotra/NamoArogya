@@ -29,16 +29,21 @@ async function createPatient(patientData, doctorId) {
             status = 'active'
         } = patientData;
 
+        // Generate next patient_id
+        const countResult = await client.query('SELECT COUNT(*) FROM patients');
+        const nextNumber = parseInt(countResult.rows[0].count) + 1;
+        const patient_id = `P-${String(nextNumber).padStart(2, '0')}`;
+
         const result = await client.query(
             `INSERT INTO patients (
-                doctor_id, name, age, gender, contact_number, email, address,
+                doctor_id, patient_id, name, age, gender, contact_number, email, address,
                 medical_history, symptoms, diagnosis, treatment_plan,
                 matched_ayush_codes, matched_icd11_codes, status,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
             RETURNING *`,
             [
-                doctorId, name, age, gender, contact_number, email, address,
+                doctorId, patient_id, name, age, gender, contact_number, email, address,
                 medical_history, symptoms, diagnosis, treatment_plan,
                 JSON.stringify(matched_ayush_codes),
                 JSON.stringify(matched_icd11_codes),
@@ -46,7 +51,7 @@ async function createPatient(patientData, doctorId) {
             ]
         );
 
-        logger.info(`Patient created: ${result.rows[0].id} by doctor: ${doctorId}`);
+        logger.info(`Patient created: ${result.rows[0].patient_id} (${result.rows[0].id}) by doctor: ${doctorId}`);
         return result.rows[0];
     } finally {
         client.release();
@@ -55,6 +60,7 @@ async function createPatient(patientData, doctorId) {
 
 /**
  * Get all patients with pagination and filters
+ * If doctorId is null, returns all patients (for admin)
  */
 async function getPatients(doctorId, options = {}) {
     const {
@@ -67,26 +73,41 @@ async function getPatients(doctorId, options = {}) {
     } = options;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    const params = [doctorId];
-    let paramIndex = 2;
+    const params = [];
+    let paramIndex = 1;
 
-    let query = 'SELECT * FROM patients WHERE doctor_id = $1';
-    let countQuery = 'SELECT COUNT(*) FROM patients WHERE doctor_id = $1';
+    let query = 'SELECT * FROM patients';
+    let countQuery = 'SELECT COUNT(*) FROM patients';
+
+    // Add WHERE clause
+    const whereClauses = [];
+
+    // Filter by doctor_id only if provided (doctors see their patients, admins see all)
+    if (doctorId) {
+        whereClauses.push(`doctor_id = $${paramIndex}`);
+        params.push(doctorId);
+        paramIndex++;
+    }
 
     // Filter by status
     if (status) {
-        query += ` AND status = $${paramIndex}`;
-        countQuery += ` AND status = $${paramIndex}`;
+        whereClauses.push(`status = $${paramIndex}`);
         params.push(status);
         paramIndex++;
     }
 
     // Search by name or symptoms
     if (search) {
-        query += ` AND (name ILIKE $${paramIndex} OR symptoms ILIKE $${paramIndex})`;
-        countQuery += ` AND (name ILIKE $${paramIndex} OR symptoms ILIKE $${paramIndex})`;
+        whereClauses.push(`(name ILIKE $${paramIndex} OR symptoms ILIKE $${paramIndex})`);
         params.push(`%${search}%`);
         paramIndex++;
+    }
+
+    // Add WHERE clauses if any
+    if (whereClauses.length > 0) {
+        const whereString = ' WHERE ' + whereClauses.join(' AND ');
+        query += whereString;
+        countQuery += whereString;
     }
 
     // Add sorting and pagination
