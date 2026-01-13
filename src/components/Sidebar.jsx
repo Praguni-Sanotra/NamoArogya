@@ -37,10 +37,16 @@ const Sidebar = () => {
             roles: ['doctor'], // Only available for doctors, not admins
         },
         {
+            name: 'Analytics',
+            path: '/analytics',
+            icon: BarChart3,
+            roles: ['doctor'],
+        },
+        {
             name: 'Medical Code Database',
             path: '/analytics',
             icon: BarChart3,
-            roles: ['doctor', 'admin'],
+            roles: ['admin'],
         },
     ];
 

@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { User, Phone, Mail, MapPin, FileText, Activity, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
@@ -26,8 +27,12 @@ const AddPatient = () => {
         diagnosis: '',
         medical_history: '',
         allergies: '',
-        status: 'active'
+        status: 'active',
+        doctor_id: ''
     });
+
+    const { user } = useSelector((state) => state.auth);
+    const [doctors, setDoctors] = useState([]);
 
     const [suggestedCodes, setSuggestedCodes] = useState([]);
     const [selectedCodes, setSelectedCodes] = useState([]);
@@ -55,6 +60,30 @@ const AddPatient = () => {
             }
         };
     }, [formData.symptoms]);
+
+    // Fetch doctors if user is admin
+    useEffect(() => {
+        const fetchDoctors = async () => {
+            if (user?.role === 'admin') {
+                try {
+                    const token = localStorage.getItem('namoarogya_token');
+                    const response = await axios.get('http://localhost:5000/api/admin/users', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+
+                    if (response.data.success) {
+                        // Filter only doctors
+                        const doctorUsers = response.data.data.users.filter(u => u.role === 'doctor');
+                        setDoctors(doctorUsers);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch doctors:', err);
+                }
+            }
+        };
+
+        fetchDoctors();
+    }, [user]);
 
     const fetchCodeSuggestions = async () => {
         setLoadingCodes(true);
@@ -181,7 +210,27 @@ const AddPatient = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Information */}
                 <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
+                        {user?.role === 'admin' && (
+                            <div className="w-64">
+                                <select
+                                    name="doctor_id"
+                                    value={formData.doctor_id}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-blue-50 text-blue-900 font-medium"
+                                >
+                                    <option value="">Select Doctor *</option>
+                                    {doctors.map(doc => (
+                                        <option key={doc.id} value={doc.id}>
+                                            {doc.name} ({doc.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Name */}
                         <div>
@@ -384,8 +433,8 @@ const AddPatient = () => {
                                         key={index}
                                         onClick={() => toggleCodeSelection(code)}
                                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${isSelected
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <div className="flex items-start justify-between">

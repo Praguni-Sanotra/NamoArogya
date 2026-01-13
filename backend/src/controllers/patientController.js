@@ -37,7 +37,12 @@ try {
 async function createPatient(req, res, next) {
     try {
         const patientData = req.body;
-        const doctorId = req.user.id; // From auth middleware
+        let doctorId = req.user.id; // Default to current user
+
+        // Allow admin to specify doctor_id
+        if (req.user.role === 'admin' && patientData.doctor_id) {
+            doctorId = patientData.doctor_id;
+        }
 
         // Get AI code recommendations if not provided
         if (!patientData.matched_ayush_codes || patientData.matched_ayush_codes.length === 0) {

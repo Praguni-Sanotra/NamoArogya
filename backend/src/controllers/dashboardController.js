@@ -29,6 +29,11 @@ try {
     logger.warn('PostgreSQL patient service not available');
 }
 
+// Check if using PostgreSQL
+function isPostgresEnabled() {
+    return !!pgPatientService;
+}
+
 /**
  * Get dashboard statistics for doctor
  */
@@ -36,11 +41,15 @@ async function getDoctorStats(req, res, next) {
     try {
         const doctorId = req.user.id;
 
-        // Use PostgreSQL if MongoDB is not connected
-        if (!isMongoDBConnected() && pgPatientService) {
+        // Prioritize PostgreSQL if available
+        if (isPostgresEnabled()) {
             logger.info('Using PostgreSQL for dashboard stats');
             const stats = await pgPatientService.getDashboardStats(doctorId);
             return successResponse(res, { stats }, 'Dashboard statistics retrieved successfully', 200);
+        }
+
+        if (!isMongoDBConnected()) {
+            throw new Error('No database connection available');
         }
 
         const now = new Date();
@@ -135,6 +144,18 @@ async function getRecentPatients(req, res, next) {
         const doctorId = req.user.id;
         const limit = parseInt(req.query.limit) || 5;
 
+        // Prioritize PostgreSQL if available
+        if (isPostgresEnabled()) {
+            // getPatients supports sorting and pagination, use that
+            const result = await pgPatientService.getPatients(doctorId, {
+                limit,
+                page: 1,
+                sortBy: 'updated_at',
+                sortOrder: 'desc'
+            });
+            return successResponse(res, { patients: result.patients }, 'Recent patients retrieved successfully', 200);
+        }
+
         const recentPatients = await Patient.find({ doctor_id: doctorId })
             .sort({ updated_at: -1 })
             .limit(limit)
@@ -175,8 +196,8 @@ async function getAnalytics(req, res, next) {
                 monthsToShow = 6;
         }
 
-        // Use PostgreSQL if MongoDB is not connected
-        if (!isMongoDBConnected() && pgPatientService) {
+        // Prioritize PostgreSQL if available
+        if (isPostgresEnabled()) {
             logger.info('Using PostgreSQL for analytics data');
             const result = await pgPatientService.getAnalytics(doctorId, startDate, monthsToShow);
             return successResponse(res, result, 'Analytics data retrieved successfully', 200);

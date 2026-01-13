@@ -268,7 +268,9 @@ const Analytics = () => {
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-neutral-900">Medical Code Database</h1>
+                    <h1 className="text-2xl font-bold text-neutral-900">
+                        {user?.role === 'doctor' ? 'Analytics' : 'Medical Code Database'}
+                    </h1>
                     <p className="text-neutral-600 mt-1">
                         {activeTab === 'charts'
                             ? 'Insights and trends from your healthcare data'
@@ -305,18 +307,20 @@ const Analytics = () => {
                             Analytics Charts
                         </div>
                     </button>
-                    <button
-                        onClick={() => setActiveTab('codes')}
-                        className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'codes'
-                            ? 'border-primary-600 text-primary-600'
-                            : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
-                            }`}
-                    >
-                        <div className="flex items-center gap-2">
-                            <Database size={18} />
-                            Code Data
-                        </div>
-                    </button>
+                    {user?.role !== 'doctor' && (
+                        <button
+                            onClick={() => setActiveTab('codes')}
+                            className={`pb-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'codes'
+                                ? 'border-primary-600 text-primary-600'
+                                : 'border-transparent text-neutral-600 hover:text-neutral-900 hover:border-neutral-300'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Database size={18} />
+                                Code Data
+                            </div>
+                        </button>
+                    )}
                 </nav>
             </div>
 

@@ -1,29 +1,47 @@
 const User = require('../models/mongodb/User');
 const Patient = require('../models/mongodb/Patient');
-const { pool } = require('../config/database');
+const { pgPool: pool } = require('../config/database');
 
 /**
  * Get all users (Admin only)
  */
 const getAllUsers = async (req, res) => {
     try {
-        const users = await User.find()
-            .select('-password')
-            .sort({ created_at: -1 });
+        // Try to fetch from PostgreSQL first as it's the primary source in hybrid mode
+        const result = await pool.query(
+            'SELECT id, name, email, role, specialty, license_number, created_at FROM users ORDER BY created_at DESC'
+        );
 
         res.status(200).json({
             success: true,
             data: {
-                users,
-                count: users.length
+                users: result.rows,
+                count: result.rows.length
             }
         });
     } catch (error) {
         console.error('Get all users error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch users'
-        });
+
+        // Fallback to MongoDB if PostgreSQL fails (though unlikely if pool is working)
+        try {
+            const users = await User.find()
+                .select('-password')
+                .sort({ created_at: -1 });
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    users,
+                    count: users.length
+                }
+            });
+        } catch (mongoError) {
+            console.error('MongoDB fallback failed:', mongoError);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to fetch users'
+            });
+        }
     }
 };
 

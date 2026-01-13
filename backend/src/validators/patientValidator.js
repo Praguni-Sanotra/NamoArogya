@@ -43,6 +43,7 @@ const createPatientSchema = Joi.object({
     ).optional(),
     icd_codes: Joi.array().items(Joi.string()).optional(),
     status: Joi.string().valid('active', 'discharged', 'follow-up', 'inactive').optional(),
+    doctor_id: Joi.alternatives().try(Joi.string(), Joi.number()).optional(), // Allow admin to set doctor_id
 });
 
 const updatePatientSchema = Joi.object({
